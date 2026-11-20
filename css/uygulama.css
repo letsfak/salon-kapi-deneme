@@ -108,3 +108,11 @@ dialog.diyalog-genis { width: min(720px, calc(100vw - 24px)); max-height: calc(1
   .iki-sutun, .davet-izgara { grid-template-columns: 1fr; }
   .davet-izgara .diyalog-qr { margin: 0 auto; }
 }
+
+/* Marka ve KVKK kutusu (üye kartı) */
+.uye-marka { display: flex; align-items: center; gap: 10px; }
+.uye-marka img { border-radius: 50%; flex: none; }
+.kvkk-kutu { border-radius: var(--r-m); padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--ok); display: grid; gap: 10px; }
+.kvkk-kutu p { font-size: 0.92rem; }
+.kapi-marka-logo { height: 38px; width: auto; }
+.kapi-marka-satir { display: flex; align-items: center; gap: 12px; margin-right: auto; }

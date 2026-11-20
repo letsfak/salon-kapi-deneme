@@ -1,0 +1,18 @@
+/* Aydınlatma metni: okunaklı tek sütun, yazdırılabilir. */
+.metin { max-width: 720px; margin: 0 auto; padding: 28px 16px 64px; display: grid; gap: 22px; }
+.metin-ust { display: flex; gap: 16px; align-items: center; padding-bottom: 18px; border-bottom: 3px solid var(--ink); }
+.metin-ust img { flex: none; border-radius: 50%; }
+.metin-ust h1 { font-size: clamp(1.7rem, 6vw, 2.4rem); }
+.metin .kucuk { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+.metin .ozet { font-size: 1.05rem; padding: 14px 16px; background: var(--surface); border-left: 4px solid var(--ok); border-radius: var(--r-s); }
+.metin section { display: grid; gap: 8px; }
+.metin h2 { font-size: 1.45rem; }
+.metin ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.metin p, .metin li { line-height: 1.6; }
+.metin-alt { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 10px; }
+@media print {
+  body { background: #fff; color: #000; }
+  .metin-alt { display: none; }
+  .metin { padding: 0; max-width: none; }
+  .metin .ozet { border-left-color: #000; }
+}

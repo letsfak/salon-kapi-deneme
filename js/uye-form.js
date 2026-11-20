@@ -4,7 +4,8 @@ import { yeniUye, uzat, odemeEkle, bilgiGuncelle, borc } from './salon.js';
 import { bugunISO, gercekTarih } from './tarih.js';
 import { davetLinkiUret } from './veri.js';
 import { waLinki, MESAJ } from './whatsapp.js';
-import { k, tl, tarihTR, qrSvg, pencereAc, bildir } from './ui.js';
+import { k, tl, tarihTR, qrSvg, pencereAc, bildir, tabanAdres } from './ui.js';
+import { MARKA } from './marka.js';
 
 const sayi = (v) => Math.max(0, Math.round(Number(String(v ?? '').replace(/[^\d]/g, '')) || 0));
 const paketSecenekleri = (salon, secili = 1) => salon.paketler
@@ -171,7 +172,10 @@ export function duzenleFormu(ctx, uye, sonra) {
 /** Üyenin kartı: ekranda QR (resepsiyonda telefonla okutulur) ve WhatsApp'tan gönderme. */
 export async function davetPenceresi(ctx, uye) {
   const link = await davetLinkiUret(ctx.salon, uye);
-  const wa = waLinki(uye.tel, MESAJ.davet(uye, ctx.salon.ad, link));
+  const wa = waLinki(uye.tel, MESAJ.davet(uye, ctx.salon.ad, link, `${tabanAdres()}${MARKA.aydinlatma}`));
+  // KVKK kanıtı: kart (içinde aydınlatma metni bağlantısı olan) bu tarihte üyeye verildi.
+  const guncel = await uyeGetir(uye.id);
+  if (guncel) await uyeKaydet({ ...guncel, aydinlatma: Date.now() });
   pencereAc(`
     <div><p class="etiket">Üyenin giriş kartı</p><h2>${k(uye.ad)}</h2></div>
     <div class="davet-izgara">

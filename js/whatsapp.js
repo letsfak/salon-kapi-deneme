@@ -15,7 +15,7 @@ export const waLinki = (tel, metin) => `https://wa.me/${telefonNormal(tel) ?? ''
 const ilkAd = (ad) => String(ad || '').split(' ')[0];
 
 export const MESAJ = {
-  davet: (uye, salon, link) => `Merhaba ${ilkAd(uye.ad)}, ${salon} giriş kartın hazır:\n${link}\n\nLinke dokun, açılan sayfada "Ana ekrana ekle"yi seç. Salona gelince uygulamayı açıp QR'ı turnikedeki okuyucuya göster.`,
+  davet: (uye, salon, link, aydinlatmaLinki) => `Merhaba ${ilkAd(uye.ad)}, ${salon} giriş kartın hazır:\n${link}\n\nLinke dokun, açılan sayfada "Ana ekrana ekle"yi seç. Salona gelince uygulamayı açıp QR'ı turnikedeki okuyucuya göster.${aydinlatmaLinki ? `\n\nKişisel verilerin nasıl işlendiği (KVKK aydınlatma metni): ${aydinlatmaLinki}` : ''}`,
   bitiyor: (uye, salon, tarihMetni, kalanGun) => (kalanGun < 0
     ? `Merhaba ${ilkAd(uye.ad)}, ${salon} üyeliğin ${tarihMetni} tarihinde bitti. Yenilemek istersen resepsiyona uğrayabilir ya da buraya yazabilirsin.`
     : `Merhaba ${ilkAd(uye.ad)}, ${salon} üyeliğin ${tarihMetni} tarihinde bitiyor. Yenilemek için resepsiyona uğrayabilir ya da buraya yazabilirsin.`),

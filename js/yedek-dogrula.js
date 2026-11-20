@@ -60,6 +60,7 @@ function uyeTemizle(u) {
     olusturma: zamanMi(u.olusturma) ? u.olusturma : null,
     eksik: u.eksik === true,
     hatirlatmalar: Object.fromEntries(HATIRLATMA.filter((t) => zamanMi(hat[t])).map((t) => [t, hat[t]])),
+    aydinlatma: zamanMi(u.aydinlatma) ? u.aydinlatma : null,
   };
 }
 

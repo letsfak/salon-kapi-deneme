@@ -1,5 +1,7 @@
 // Ayarlar: salon, paket ücretleri, borç kuralı, PIN, yedek, röle komutları.
-import { ayarOku, ayarYaz } from './depo.js';
+import { ayarOku, ayarYaz, uyeSil } from './depo.js';
+import { silinecekUyeler } from './kural.js';
+import { MARKA } from './marka.js';
 import { pinGecerliMi, pinDogrula, pinTuret } from './pin.js';
 import { klasorDestekli, yedekKlasoruSec, yedekDurumu, gunlukYedekAl, yedekIndir, yedektenYukle, yedekIzniVer } from './yedek.js';
 import { VARSAYILAN_ROLE, hexBayt } from './role.js';
@@ -35,6 +37,15 @@ export function ac(el, ctx) {
         <p class="aciklama">Bu bilgisayardaki tüm veri, seçtiğiniz yedekteki haliyle değişir.</p>
         <input type="file" accept="application/json,.json" class="girdi" data-yukle></details>
       <p class="kucuk-not">Yedek dosyası salonun gizli anahtarını içerir. Laptopta ya da USB bellekte durmalı, kimseyle paylaşılmamalı.</p>
+    </section>
+
+    <section class="kutu form-yigin">
+      <h2>Kişisel veriler (KVKK)</h2>
+      <p class="aciklama">Üyelere giden kart linkinde aydınlatma metni de vardır. Resepsiyona basılı bir kopyasını asın.</p>
+      <div class="satir-islem"><a class="btn" href="${k(MARKA.aydinlatma)}" target="_blank" rel="noopener">Aydınlatma metnini aç / yazdır</a></div>
+      <p class="aciklama" data-saklama></p>
+      <button type="button" class="btn" data-saklama-sil hidden>Saklama süresi dolanları sil</button>
+      <p class="kucuk-not">Kapı kayıtları 12 ay sonra kendiliğinden silinir. Üyeliği bittikten 2 yıl sonra üyenin kaydı silinmelidir.</p>
     </section>
 
     <section class="kutu form-yigin">
@@ -107,6 +118,20 @@ export function ac(el, ctx) {
     try { const r = await yedektenYukle(dosya); bildir(`Yedek yüklendi: ${r.uye} üye`); ctx.yenile(); } catch (h) { bildir(h.message, { hata: true }); }
   });
   el.querySelector('[data-csv]').addEventListener('click', () => csvAktarPenceresi(ctx));
+
+  const silinecek = silinecekUyeler(ctx.uyeler);
+  el.querySelector('[data-saklama]').textContent = silinecek.length
+    ? `Üyeliği 2 yıldan uzun süre önce bitmiş ${silinecek.length} kişinin kaydı silinmeli.`
+    : 'Saklama süresi dolan üye kaydı yok.';
+  const silDugmesi = el.querySelector('[data-saklama-sil]');
+  silDugmesi.hidden = silinecek.length === 0;
+  silDugmesi.addEventListener('click', async () => {
+    if (!window.confirm(`${silinecek.length} eski üyenin kaydı, ödemeleri ve kapı kayıtları silinecek. Devam edilsin mi?`)) return;
+    silDugmesi.disabled = true;
+    for (const u of silinecek) await uyeSil(u.id);
+    bildir(`${silinecek.length} eski kayıt silindi`);
+    ctx.yenile();
+  });
 
   const pinForm = el.querySelector('[data-pin]');
   pinForm.addEventListener('submit', async (e) => {

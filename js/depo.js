@@ -112,6 +112,17 @@ export async function uyeHareketleri(uyeId, enFazla = 20) {
   return hepsi.sort((a, b) => b.zaman - a.zaman).slice(0, enFazla);
 }
 
+/** Saklama süresi dolan kapı kayıtlarını siler (aydınlatma metnindeki 12 ay sözü). Silinen sayıyı döndürür. */
+export async function eskiHareketleriSil(sinirZaman) {
+  const tx = (await dbAc()).transaction('hareketler', 'readwrite');
+  const indeks = tx.objectStore('hareketler').index('zaman');
+  const anahtarlar = await istek(indeks.getAllKeys(IDBKeyRange.upperBound(sinirZaman, true)));
+  anahtarlar.forEach((no) => tx.objectStore('hareketler').delete(no));
+  await islemBitti(tx);
+  if (anahtarlar.length) haberVer();
+  return anahtarlar.length;
+}
+
 export async function odemeKaydet(odeme) {
   await istek((await depo('odemeler', 'readwrite')).add(odeme));
   haberVer();

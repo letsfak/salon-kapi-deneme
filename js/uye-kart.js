@@ -24,7 +24,7 @@ export async function uyeKartiAc(ctx, uyeId) {
       <div><dt>Bitiş</dt><dd>${k(tarihTR(uye.bitis))}<small>${k(kalanMetni(d.kalanGun))}</small></dd></div>
       <div><dt>Borç (bu dönem)</dt><dd class="${kalanBorc ? 'borc' : ''}">${k(tl(kalanBorc))}</dd></div>
       <div><dt>Son geliş</dt><dd>${k(sonGelisMetni(uye.sonGelis))}</dd></div>
-      <div><dt>Telefon kartı</dt><dd>${uye.surum > 1 ? `${uye.surum - 1} kez yenilendi` : 'İlk kart'}</dd></div>
+      <div><dt>Telefon kartı</dt><dd>${uye.surum > 1 ? `${uye.surum - 1} kez yenilendi` : 'İlk kart'}<small>KVKK: ${uye.aydinlatma ? `${k(kisaTarih(uye.aydinlatma))} kartla bildirildi` : 'kart henüz gönderilmedi'}</small></dd></div>
     </dl>
     <div class="islem-izgara">
       <button type="button" class="btn btn-ana" data-i="davet">Kartı gönder</button>

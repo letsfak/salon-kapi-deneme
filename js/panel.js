@@ -1,5 +1,6 @@
 // Sahip/hoca paneli kabuğu: sekmeler, canlı yenileme, hareketsizlikte kilit, günlük otomatik yedek.
-import { degisiklikDinle } from './depo.js';
+import { degisiklikDinle, eskiHareketleriSil } from './depo.js';
+import { KAPI_KAYIT_SAKLAMA_GUN } from './kural.js';
 import { KILIT_MS, paneliAcikIsaretle, paneliKilitle } from './pin.js';
 import { gunlukYedekAl, yedekDurumu, yedekIzniVer } from './yedek.js';
 import { veriYukle } from './veri.js';
@@ -106,6 +107,8 @@ export function panelAc(kok, salonIlk, sekmeAd) {
   saatYaz();
   ciz();
   yedekBandi();
+  // Aydınlatma metnindeki söz: kapı kayıtları 12 ay sonra silinir.
+  eskiHareketleriSil(Date.now() - KAPI_KAYIT_SAKLAMA_GUN * 86_400_000).catch(() => {});
 
   return () => {
     ctx.aktif = false;

@@ -3,7 +3,8 @@ import { ayarYaz } from './depo.js';
 import { b64u, rastgeleAnahtar } from './kod.js';
 import { pinGecerliMi, pinTuret, paneliAcikIsaretle } from './pin.js';
 import { yedektenYukle } from './yedek.js';
-import { bildir } from './ui.js';
+import { bildir, k } from './ui.js';
+import { MARKA } from './marka.js';
 
 const PAKETLER = [1, 3, 6, 12];
 
@@ -17,7 +18,7 @@ export function kurulumAc(kok) {
     </header>
     <form class="kart form-kart" data-form novalidate>
       <div class="alan"><label for="k-ad">Salonun adı</label>
-        <input id="k-ad" name="ad" class="girdi" required maxlength="40" autocomplete="off" placeholder="Örn. Akçaabat Fitness"></div>
+        <input id="k-ad" name="ad" class="girdi" required maxlength="40" autocomplete="off" value="${k(MARKA.ad)}"></div>
       <div class="form-izgara">
         <div class="alan"><label for="k-pin">Panel PIN'i (4–8 rakam)</label>
           <input id="k-pin" name="pin" class="girdi" inputmode="numeric" type="password" maxlength="8" autocomplete="new-password" required></div>
@@ -26,7 +27,7 @@ export function kurulumAc(kok) {
       </div>
       <fieldset class="alan-grup"><legend>Paket ücretleri (TL, isteğe bağlı; üye eklerken kendiliğinden gelir)</legend>
         <div class="form-izgara dortlu">${PAKETLER.map((ay) => `
-          <div class="alan"><label for="k-p${ay}">${ay} ay</label><input id="k-p${ay}" name="p${ay}" class="girdi" inputmode="numeric" maxlength="7"></div>`).join('')}
+          <div class="alan"><label for="k-p${ay}">${ay} ay</label><input id="k-p${ay}" name="p${ay}" class="girdi" inputmode="numeric" maxlength="7" value="${Number(MARKA.paketler.find((p) => p.ay === ay)?.ucret) || ''}"></div>`).join('')}
         </div>
       </fieldset>
       <label class="onay"><input type="checkbox" name="engel"> Borcu olan üye kapıdan geçemesin (işaretlenmezse geçer, ekranda "Resepsiyona uğra" yazar)</label>

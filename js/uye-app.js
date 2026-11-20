@@ -5,8 +5,22 @@ import { qrMetni, yedekKod, pencereKalanMs, PENCERE_MS, b64u } from './kod.js';
 import { uyeDurumu } from './kural.js';
 import { k, qrSvg, tarihTR, kalanMetni, DURUM, azHareket } from './ui.js';
 import { cevrimdisiKur } from './cevrimdisi.js';
+import { MARKA } from './marka.js';
 
 const ANAHTAR = 'salonkapi.kart';
+const KVKK_ANAHTARI = 'salonkapi.kvkkOkundu';
+
+const kvkkOkunduMu = () => { try { return Boolean(localStorage.getItem(KVKK_ANAHTARI)); } catch { return false; } };
+
+// Bilgilendirme, onay değil: kart okunmasa da çalışır (açık rıza üyelik şartı yapılamaz).
+function kvkkKutusu() {
+  if (kvkkOkunduMu()) return '';
+  return `<div class="kvkk-kutu" data-kvkk>
+    <p><b>Kişisel verileriniz.</b> ${k(MARKA.ad)} bilgilerinizi yalnız üyeliğiniz ve salona giriş için işler. Bu karttaki bilgiler sadece telefonunuzda durur, bir sunucuya gönderilmez.</p>
+    <div class="satir-islem"><a class="btn btn-kucuk" href="${k(MARKA.aydinlatma)}">Aydınlatma metnini oku</a>
+      <button type="button" class="btn btn-kucuk btn-koyu" data-kvkk-tamam>Okudum, bilgilendim</button></div>
+  </div>`;
+}
 const kok = document.getElementById('uygulama');
 
 function kayitliKart() {
@@ -45,7 +59,7 @@ function ekleYardimi() {
 }
 
 function kartYok() {
-  kok.innerHTML = `<section class="uye kart-yok"><p class="etiket">Salon Kart</p><h1>Kartınız bu telefonda yok</h1>
+  kok.innerHTML = `<section class="uye kart-yok"><div class="uye-marka"><img src="${k(MARKA.logo)}" alt="" width="44" height="44"><p class="etiket">${k(MARKA.ad)}</p></div><h1>Kartınız bu telefonda yok</h1>
     <p class="uye-aciklama">Salonun WhatsApp'tan gönderdiği linke dokunun ya da resepsiyonda ekrandaki QR'ı telefonunuzun kamerasıyla okutun.</p></section>`;
 }
 
@@ -55,7 +69,7 @@ function kartCiz(kart) {
   document.title = `${kart.salon} · Salon Kart`;
   kok.innerHTML = `
   <section class="uye">
-    <header class="uye-ust"><p class="etiket"></p></header>
+    <header class="uye-ust"><div class="uye-marka"><img src="${k(MARKA.logo)}" alt="" width="44" height="44"><p class="etiket"></p></div></header>
     <div class="uye-kimlik"><h1></h1>
       <p class="uye-durum"><span class="cip ${DURUM[d.durum].sinif}">${DURUM[d.durum].etiket}</span><span>${k(kalanMetni(d.kalanGun))} · bitiş ${k(tarihTR(kart.bitis))}</span></p></div>
     ${uyari ? `<p class="uye-uyari">${k(uyari)}</p>` : ''}
@@ -66,9 +80,15 @@ function kartCiz(kart) {
     </div>
     <div class="yedek-kutu"><span class="etiket">QR okunmazsa yedek kod</span><span class="sayi yedek-sayi" data-yedek>······</span></div>
     <p class="uye-aciklama kucuk">Ekran parlaklığını açın, QR'ı turnikedeki okuyucuya 5–10 cm'den gösterin.</p>
+    ${kvkkKutusu()}
     ${ekleYardimi()}
     <p class="kucuk-not">Bitiş tarihi değiştiyse ya da telefonu değiştirdiyseniz resepsiyondan yeni link isteyin. Bu kart size özeldir, başkasıyla paylaşmayın.</p>
+    <p class="kucuk-not"><a href="${k(MARKA.aydinlatma)}">KVKK aydınlatma metni</a> · ${k(MARKA.adres)}</p>
   </section>`;
+  kok.querySelector('[data-kvkk-tamam]')?.addEventListener('click', () => {
+    try { localStorage.setItem(KVKK_ANAHTARI, String(Date.now())); } catch { /* gizli sekme */ }
+    kok.querySelector('[data-kvkk]')?.remove();
+  });
   kok.querySelector('.uye-ust .etiket').textContent = kart.salon;
   kok.querySelector('.uye-kimlik h1').textContent = kart.ad;
 }

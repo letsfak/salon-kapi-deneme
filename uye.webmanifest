@@ -1,11 +1,11 @@
 {
-  "name": "Salon Kart",
-  "short_name": "Salon Kart",
-  "description": "Spor salonu giriş kartı: QR ile turnikeden geç, kalan gününü gör.",
+  "name": "SSFitness Kart",
+  "short_name": "SSFitness",
+  "description": "SSFitness giriş kartı: QR ile turnikeden geç, kalan gününü gör.",
   "lang": "tr",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f2efe8",
+  "background_color": "#120b0a",
   "theme_color": "#15171a",
   "icons": [
     { "src": "ikon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

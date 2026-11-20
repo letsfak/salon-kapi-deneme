@@ -5,6 +5,15 @@ export const BITIYOR_GUN = 7;
 export const UZUN_ARA_GUN = 10;
 export const GECMIS_BITEN_GUN = 30;
 export const GIRIS_KILIDI_MS = 2 * 60 * 60 * 1000; // çıkış okutulmazsa 2 saat sonra çıkmış sayılır
+// Aydınlatma metnindeki saklama sözleri: kapı kayıtları 12 ay, üyelik bilgileri üyelik bitince 2 yıl.
+export const KAPI_KAYIT_SAKLAMA_GUN = 365;
+export const UYE_SAKLAMA_GUN = 730;
+
+/** Üyeliği bitmiş ve bitişinden bu yana 2 yıldan uzun geçmiş (dondurulmamış) üyeler: silinmeleri gerekir. */
+export function silinecekUyeler(uyeler, simdi = Date.now()) {
+  const bugun = bugunISO(simdi);
+  return uyeler.filter((u) => !u.donduruldu && gunFarki(u.bitis, bugun) > UYE_SAKLAMA_GUN);
+}
 
 export function uyeDurumu(uye, simdi = Date.now()) {
   const kalanGun = gunFarki(bugunISO(simdi), uye.bitis);

@@ -11,6 +11,7 @@ import { SERI_SABLONU, seriBolumuKur } from './kapi-seri.js';
 import { KAMERA_SABLONU, kameraKur } from './kapi-kamera.js';
 import { ROLE_SABLONU, roleBolumuKur } from './kapi-role.js';
 import { k, saatTR, sesiAc, bip, RED_ETIKET } from './ui.js';
+import { MARKA } from './marka.js';
 
 const SONUC_SURESI_MS = 2800;
 const AYNI_KOD_BEKLEME_MS = 8000;
@@ -27,7 +28,7 @@ const KOD_KILIT_MS = 60_000;
 const SABLON = `
 <section class="kapi">
   <header class="kapi-ust">
-    <div class="kapi-marka"><span class="etiket">Kapı · Turnike 1</span><strong data-salon></strong></div>
+    <div class="kapi-marka-satir"><img class="kapi-marka-logo" src="${MARKA.isaret}" alt=""><div class="kapi-marka"><span class="etiket">Kapı · Turnike 1</span><strong data-salon></strong></div></div>
     <div class="mod-secici" role="group" aria-label="Okutma yönü">
       <button type="button" data-mod="giris" aria-pressed="true">Giriş</button>
       <button type="button" data-mod="cikis" aria-pressed="false">Çıkış</button>
