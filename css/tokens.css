@@ -1,0 +1,74 @@
+/* Salon Kapı — tasarım belirteçleri.
+   Yön: spor salonu zemini (tebeşir beyazı + kauçuk siyahı), turuncu yalnız marka/eylem için.
+   Durum renkleri anlamsaldır: yeşil = geçti, kırmızı = red, amber = bitiyor, mavi = donduruldu. */
+:root {
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --bg: #f2efe8;
+  --surface: #ffffff;
+  --surface-2: #e9e5dc;
+  --ink: #15171a;
+  --muted: #5a6068;
+  --line: #d8d3c8;
+  --line-strong: #b9b2a4;
+
+  --brand: #f26a1b;
+  --brand-ink: #15171a;
+  --brand-soft: #fde4d3;
+
+  --ok: #13703a;
+  --ok-bg: #dff2e5;
+  --red: #b42318;
+  --red-bg: #fbe4e1;
+  --warn: #8a4b00;
+  --warn-bg: #fcefd6;
+  --frozen: #2f4f9a;
+  --frozen-bg: #e3e9f7;
+
+  --door-bg: #0c0e11;
+  --door-surface: #171a1f;
+  --door-line: #2a2f37;
+  --door-ink: #f4f2ee;
+  --door-muted: #9aa3ad;
+  --door-ok: #15a34a;
+  --door-red: #d92d20;
+
+  --r-s: 6px;
+  --r-m: 12px;
+  --r-l: 22px;
+  --shadow-1: 0 1px 0 rgba(21, 23, 26, 0.06), 0 1px 3px rgba(21, 23, 26, 0.08);
+  --shadow-2: 0 12px 32px -12px rgba(21, 23, 26, 0.28);
+
+  --gutter: clamp(16px, 3vw, 32px);
+  --dur-fast: 140ms;
+  --dur: 260ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111317;
+    --surface: #1a1d22;
+    --surface-2: #23272e;
+    --ink: #eeebe5;
+    --muted: #a3abb4;
+    --line: #2d3239;
+    --line-strong: #444b55;
+    --brand-soft: #3a2316;
+    --ok: #4ccb7a;
+    --ok-bg: #11291a;
+    --red: #ff7a6e;
+    --red-bg: #33140f;
+    --warn: #f3b552;
+    --warn-bg: #2f2210;
+    --frozen: #93acf0;
+    --frozen-bg: #18213a;
+    --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.3);
+    --shadow-2: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}

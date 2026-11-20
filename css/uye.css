@@ -1,0 +1,55 @@
+/* Üye ekranı: telefon öncelikli. QR her temada beyaz zemin üstünde siyah kalır (okunabilirlik). */
+.uye { max-width: 460px; margin: 0 auto; padding: 18px 16px 72px; display: grid; gap: 18px; }
+.uye-ust { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.uye-kimlik { display: grid; gap: 8px; }
+.uye-kimlik h1 { font-size: clamp(2.2rem, 10vw, 3rem); }
+.uye-durum { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); font-size: 0.95rem; }
+.uye-uyari { padding: 12px 14px; border-radius: var(--r-m); background: var(--red-bg); color: var(--red); font-weight: 600; }
+.uye-aciklama { color: var(--muted); }
+.uye-aciklama.kucuk { font-size: 0.875rem; }
+
+.sekmeler { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--surface-2); border-radius: var(--r-m); }
+.sekmeler button {
+  min-height: 42px; border: 0; border-radius: 9px; background: transparent; color: var(--muted);
+  font-weight: 600; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast);
+}
+.sekmeler button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+.sekme { display: grid; gap: 14px; }
+
+.qr-kart {
+  background: #fff; color: #15171a; border-radius: var(--r-l); padding: 18px 18px 14px;
+  box-shadow: var(--shadow-2); display: grid; gap: 12px; justify-items: center;
+  border: 1px solid #e4e0d6;
+}
+.qr-alan { width: min(76vw, 320px); aspect-ratio: 1; }
+.qr-alan svg { width: 100%; height: 100%; }
+.geri-sayim { width: 100%; height: 6px; border-radius: 999px; background: #ece8df; overflow: hidden; }
+.geri-sayim span { display: block; height: 100%; background: var(--brand); transform-origin: left center; }
+.qr-not { font-size: 0.85rem; color: #555b63; text-align: center; }
+
+.yedek-kutu {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; border-radius: var(--r-m); background: var(--surface); border: 1px dashed var(--line-strong);
+}
+.yedek-sayi { font-size: 2rem; letter-spacing: 0.08em; }
+
+.icerik-kart { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); padding: 18px; display: grid; gap: 12px; }
+.icerik-kart > .etiket { color: var(--brand); }
+.program, .beslenme { list-style: none; margin: 0; padding: 0; display: grid; }
+.program li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.program li .sayi { font-size: 1.3rem; }
+.beslenme li { display: grid; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.beslenme li b { font-family: var(--font-display); font-size: 1.15rem; }
+.beslenme li span { color: var(--muted); }
+
+.uye-secim h1 { font-size: clamp(2.2rem, 9vw, 2.8rem); }
+.secim-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.secim-btn {
+  width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left;
+  padding: 14px 16px; border-radius: var(--r-m); border: 1.5px solid var(--line); background: var(--surface); cursor: pointer;
+  transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+}
+.secim-btn:hover { border-color: var(--ink); }
+.secim-btn:active { transform: scale(0.99); }
+.secim-ad { font: 700 1.35rem/1.1 var(--font-display); }
+.secim-alt { grid-column: 1 / -1; color: var(--muted); font-size: 0.9rem; }
