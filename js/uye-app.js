@@ -59,7 +59,7 @@ function ekleYardimi() {
 }
 
 function kartYok() {
-  kok.innerHTML = `<section class="uye kart-yok"><div class="uye-marka"><img src="${k(MARKA.logo)}" alt="" width="44" height="44"><p class="etiket">${k(MARKA.ad)}</p></div><h1>Kartınız bu telefonda yok</h1>
+  kok.innerHTML = `<section class="uye kart-yok"><div class="uye-marka"><img src="${k(MARKA.logo)}" alt="" width="44" height="44"><p class="etiket" lang="en">${k(MARKA.ad)}</p></div><h1>Kartınız bu telefonda yok</h1>
     <p class="uye-aciklama">Salonun WhatsApp'tan gönderdiği linke dokunun ya da resepsiyonda ekrandaki QR'ı telefonunuzun kamerasıyla okutun.</p></section>`;
 }
 
@@ -69,7 +69,7 @@ function kartCiz(kart) {
   document.title = `${kart.salon} · Salon Kart`;
   kok.innerHTML = `
   <section class="uye">
-    <header class="uye-ust"><div class="uye-marka"><img src="${k(MARKA.logo)}" alt="" width="44" height="44"><p class="etiket"></p></div></header>
+    <header class="uye-ust"><div class="uye-marka"><img src="${k(MARKA.logo)}" alt="" width="44" height="44"><p class="etiket" lang="en"></p></div></header>
     <div class="uye-kimlik"><h1></h1>
       <p class="uye-durum"><span class="cip ${DURUM[d.durum].sinif}">${DURUM[d.durum].etiket}</span><span>${k(kalanMetni(d.kalanGun))} · bitiş ${k(tarihTR(kart.bitis))}</span></p></div>
     ${uyari ? `<p class="uye-uyari">${k(uyari)}</p>` : ''}
