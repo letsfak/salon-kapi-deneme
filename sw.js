@@ -1,6 +1,6 @@
 // Çevrimdışı çalışma: laptop ve üyenin telefonu uygulamayı bir kere yükledikten sonra internetsiz de açar.
 // Önce önbellekten verir, arkada günceller (yeni sürüm bir sonraki açılışta gelir). Sürüm değişince eski önbellek silinir.
-const SURUM = 'salonkapi-v6';
+const SURUM = 'salonkapi-v7';
 const DOSYALAR = [
   './', 'index.html', 'uye.html', 'aydinlatma.html', 'marka/logo-daire.svg', 'marka/logo-isaret.svg', 'uye.webmanifest', 'ikon.svg', 'ikon-180.png', 'ikon-192.png', 'ikon-512.png',
   'css/fontlar.css', 'css/aydinlatma.css', 'css/tokens.css', 'css/temel.css', 'css/kapi.css', 'css/panel.css', 'css/uye.css', 'css/uygulama.css',
@@ -13,8 +13,12 @@ const DOSYALAR = [
   'js/uye-form.js', 'js/uye-kart.js', 'js/veri.js', 'js/whatsapp.js', 'js/yedek.js', 'js/yedek-dogrula.js',
 ];
 
+// Yeni sürüm kurulurken dosyalar tarayıcının HTTP önbelleğinden değil sunucudan alınır
+// (GitHub Pages 10 dk önbellek veriyor; yoksa yeni sürüm eski dosyalarla kurulabilir).
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(SURUM).then((c) => c.addAll(DOSYALAR)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(SURUM)
+    .then((c) => c.addAll(DOSYALAR.map((u) => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -29,7 +33,12 @@ self.addEventListener('fetch', (e) => {
   if (new URL(istek.url).origin !== self.location.origin) return;
   e.respondWith(caches.open(SURUM).then(async (c) => {
     const onbellekte = await c.match(istek, { ignoreSearch: true });
-    const ag = fetch(istek).then((yanit) => {
+    // Arkadaki güncelleme sunucuya sorar (değişmediyse 304, ucuz). Sayfa geçişi isteği
+    // (mode: navigate) ayarla birlikte yeniden kurulamaz; onu adresinden kurarız.
+    const tazeIstek = istek.mode === 'navigate'
+      ? new Request(istek.url, { cache: 'no-cache', credentials: istek.credentials })
+      : new Request(istek, { cache: 'no-cache' });
+    const ag = fetch(tazeIstek).then((yanit) => {
       if (yanit.ok) c.put(istek, yanit.clone());
       return yanit;
     }).catch(() => onbellekte);
