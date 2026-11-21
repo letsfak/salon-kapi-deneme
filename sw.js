@@ -1,6 +1,6 @@
 // Çevrimdışı çalışma: laptop ve üyenin telefonu uygulamayı bir kere yükledikten sonra internetsiz de açar.
 // Önce önbellekten verir, arkada günceller (yeni sürüm bir sonraki açılışta gelir). Sürüm değişince eski önbellek silinir.
-const SURUM = 'salonkapi-v7';
+const SURUM = 'salonkapi-v8';
 const DOSYALAR = [
   './', 'index.html', 'uye.html', 'aydinlatma.html', 'marka/logo-daire.svg', 'marka/logo-isaret.svg', 'uye.webmanifest', 'ikon.svg', 'ikon-180.png', 'ikon-192.png', 'ikon-512.png',
   'css/fontlar.css', 'css/aydinlatma.css', 'css/tokens.css', 'css/temel.css', 'css/kapi.css', 'css/panel.css', 'css/uye.css', 'css/uygulama.css',
