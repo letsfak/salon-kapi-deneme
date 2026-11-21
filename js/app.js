@@ -6,9 +6,22 @@ import { kilitAc } from './kilit.js';
 import { kapiAc } from './kapi.js';
 import { panelAc } from './panel.js';
 import { cevrimdisiKur } from './cevrimdisi.js';
+import { panelYakalayici } from './okut-kopru.js';
+import { bildir } from './ui.js';
 
 const kok = document.getElementById('uygulama');
 let kapat = null;
+
+// Panel ya da PIN ekranı öndeyken USB okuyucunun yazdığı QR buraya düşer: kapı ekranına iletilir.
+let yakalamaAcik = false;
+const yakalayici = panelYakalayici({
+  kapiYok: () => bildir('Üye QR okuttu ama kapı ekranı açık değil, turnike açılmadı. "Kapı ekranı ↗" ile açın.', { hata: true }),
+  kapiMesgul: () => bildir('Kapı bir önceki okutmayı gösteriyordu, bu okutma alınmadı. Üye 3 saniye sonra tekrar okutsun.', { hata: true }),
+  iletildi: () => bildir('Okutulan QR kapı ekranında işlendi'),
+  // Panel, okuyucu tuşlarını kullanıcı hareketi saymasın (yoksa üyeler okuttukça panel hiç kilitlenmez).
+  okundu: () => window.dispatchEvent(new Event('salonkapi:okutma')),
+});
+document.addEventListener('keydown', (e) => { if (yakalamaAcik) yakalayici.tus(e); }, true);
 
 function hataGoster(hata) {
   kok.innerHTML = `<div class="hata-kutu kart"><h2>Bir şey ters gitti</h2>
@@ -27,6 +40,7 @@ async function git() {
     if (!salon) sayfa = 'kurulum';
     else if (sayfa === 'kurulum') sayfa = 'panel';
     if (sayfa === 'panel' && !panelAcikMi()) sayfa = 'kilit';
+    yakalamaAcik = sayfa === 'panel' || sayfa === 'kilit';
 
     document.body.className = `sayfa-${sayfa}`;
     if (sayfa === 'kurulum') { document.title = 'Kurulum · Salon Kapı'; kapat = kurulumAc(kok); }

@@ -4,6 +4,15 @@ import { iceridekiler, bitiyorlar, gelmeyenler, uyeDurumu } from './kural.js';
 import { borc } from './salon.js';
 import { uyeKartiAc } from './uye-kart.js';
 import { k, saatTR, basHarfler, kalanMetni, RED_ETIKET } from './ui.js';
+import { gunOzeti } from './ozet.js';
+import { MESAJ, waLinki } from './whatsapp.js';
+import { MARKA } from './marka.js';
+
+function ozetLinki(ctx, bugun, simdi) {
+  const ozet = gunOzeti({ uyeler: ctx.uyeler, odemeler: ctx.odemeler, bugunHareket: bugun, simdi });
+  const tarih = new Date(simdi).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+  return waLinki(MARKA.telefon, MESAJ.gunOzeti(ctx.salon.ad, tarih, ozet));
+}
 
 const gunBasi = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
 
@@ -30,6 +39,10 @@ export function ac(el, ctx) {
       <a class="kpi-kart kpi-link" href="#/panel/hatirlat"><p class="etiket">7 gün içinde biten / bitmiş</p><p class="sayi kpi-orta">${biten.length}</p><p class="kpi-not">Tek tıkla WhatsApp hatırlatması →</p></a>
       <article class="kpi-kart"><p class="etiket">Bugün gelen</p><p class="sayi kpi-orta">${new Set(gecisler.map((h) => h.uyeId)).size}</p></article>
       <a class="kpi-kart kpi-link" href="#/panel/hatirlat"><p class="etiket">10+ gündür gelmeyen</p><p class="sayi kpi-orta">${kayip.length}</p><p class="kpi-not">Kaybetmeden yaz →</p></a>
+    </div>
+    <div class="satir-islem ayri ozet-satir">
+      <p class="kucuk-not">Kapanışta: günün sayıları ${k(MARKA.sahip)} için WhatsApp'ta hazır. Mesajda isim yok, yalnız sayılar.</p>
+      <a class="btn btn-kucuk btn-koyu" href="${k(ozetLinki(ctx, bugun, simdi))}" target="_blank" rel="noopener">Günün özetini gönder</a>
     </div>
     <div class="panel-izgara">
       <section class="kutu"><header class="kutu-ust"><h2>Bugün gelenler</h2><span class="canli">Canlı</span></header>

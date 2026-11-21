@@ -13,6 +13,7 @@ export function telefonNormal(tel) {
 export const waLinki = (tel, metin) => `https://wa.me/${telefonNormal(tel) ?? ''}?text=${encodeURIComponent(metin)}`;
 
 const ilkAd = (ad) => String(ad || '').split(' ')[0];
+const tlYaz = (n) => `${Math.round(Number(n) || 0).toLocaleString('tr-TR')} TL`;
 
 export const MESAJ = {
   davet: (uye, salon, link, aydinlatmaLinki) => `Merhaba ${ilkAd(uye.ad)}, ${salon} giriş kartın hazır:\n${link}\n\nLinke dokun, açılan sayfada "Ana ekrana ekle"yi seç. Salona gelince uygulamayı açıp QR'ı turnikedeki okuyucuya göster.${aydinlatmaLinki ? `\n\nKişisel verilerin nasıl işlendiği (KVKK aydınlatma metni): ${aydinlatmaLinki}` : ''}`,
@@ -21,4 +22,19 @@ export const MESAJ = {
     : `Merhaba ${ilkAd(uye.ad)}, ${salon} üyeliğin ${tarihMetni} tarihinde bitiyor. Yenilemek için resepsiyona uğrayabilir ya da buraya yazabilirsin.`),
   gelmeyen: (uye, salon, gun) => `Merhaba ${ilkAd(uye.ad)}, ${gun} gündür ${salon}'da göremedik, her şey yolunda mı? Seni bekliyoruz.`,
   borc: (uye, salon, tutar) => `Merhaba ${ilkAd(uye.ad)}, ${salon} üyeliğinden ${tutar} TL ödeme kaldı. Uygun olduğunda resepsiyonda ya da IBAN ile ödeyebilirsin.`,
+  // Yalnız sayılar (bkz. ozet.js): isim eklenmez.
+  gunOzeti: (salon, tarihMetni, o) => [
+    `${salon} · ${tarihMetni} özeti`,
+    '',
+    `Bugün gelen: ${o.gelen} üye`,
+    `Şu an içeride (tahmini): ${o.iceride}`,
+    `Kapıda engellenen: ${o.engellenen}`,
+    `Bugün alınan ödeme: ${tlYaz(o.bugunTahsilat)} (${o.bugunOdemeSayisi} ödeme)`,
+    `Bu ay toplam: ${tlYaz(o.ayTahsilat)}`,
+    `Süresi 7 gün içinde biten / bitmiş: ${o.biten} üye`,
+    `10+ gündür gelmeyen: ${o.gelmeyen} üye`,
+    `Aktif üye: ${o.aktif}`,
+    '',
+    'İsimler resepsiyondaki panelde.',
+  ].join('\n'),
 };

@@ -8,6 +8,12 @@ export const GIRIS_KILIDI_MS = 2 * 60 * 60 * 1000; // çıkış okutulmazsa 2 sa
 // Aydınlatma metnindeki saklama sözleri: kapı kayıtları 12 ay, üyelik bilgileri üyelik bitince 2 yıl.
 export const KAPI_KAYIT_SAKLAMA_GUN = 365;
 export const UYE_SAKLAMA_GUN = 730;
+export const USB_YEDEK_GUN = 7; // laptopun dışına (USB belleğe) yedek en az haftada bir
+
+/** Hiç alınmadıysa ya da son USB yedeğinin üzerinden USB_YEDEK_GUN geçtiyse true. */
+export function usbYedekGerekliMi(son, simdi = Date.now()) {
+  return !son || simdi - son >= USB_YEDEK_GUN * GUN_MS;
+}
 
 /** Üyeliği bitmiş ve bitişinden bu yana 2 yıldan uzun geçmiş (dondurulmamış) üyeler: silinmeleri gerekir. */
 export function silinecekUyeler(uyeler, simdi = Date.now()) {

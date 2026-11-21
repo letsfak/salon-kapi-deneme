@@ -7,6 +7,8 @@ import { yedekTemizle } from './yedek-dogrula.js';
 const EN_BUYUK_YEDEK = 30 * 1024 * 1024;
 const SAKLANAN_YEDEK = 30;
 const dosyaAdi = (ms = Date.now()) => `salonkapi-yedek-${bugunISO(ms)}.json`;
+// Laptopun dışına (USB belleğe) yedek: laptop çalınır ya da bozulursa üyeler buradan geri gelir. Sıklık: kural.js.
+const USB_ANAHTARI = 'salonkapi.usbYedek';
 
 export async function yedekIndir() {
   const veri = await tumunuDisaAktar();
@@ -16,6 +18,43 @@ export async function yedekIndir() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/** Son USB yedeğinin zamanı (ms) ya da null. Laptopa özgüdür, yedek dosyasına girmez. */
+export function usbYedekSon() {
+  try {
+    const v = Number(localStorage.getItem(USB_ANAHTARI));
+    return Number.isFinite(v) && v > 0 ? v : null;
+  } catch { return null; }
+}
+
+/**
+ * Bir tıklamanın içinden çağrılmalı. Kayıt penceresi açılır, USB bellek seçilir.
+ * Tarayıcı kayıt penceresini desteklemiyorsa dosya İndirilenler'e iner ('indirildi'), oradan kopyalanır.
+ * @returns {Promise<'yazildi'|'indirildi'|'vazgecildi'>}
+ */
+export async function usbYedekAl() {
+  const kaydet = () => { try { localStorage.setItem(USB_ANAHTARI, String(Date.now())); } catch { /* gizli pencere */ } };
+  if (typeof window.showSaveFilePicker !== 'function') {
+    await yedekIndir();
+    kaydet(); // kopyalama kullanıcıda; hatırlatma bir hafta susar
+    return 'indirildi';
+  }
+  let dosya;
+  try {
+    dosya = await window.showSaveFilePicker({
+      id: 'salonkapi-usb', suggestedName: dosyaAdi(), startIn: 'desktop',
+      types: [{ description: 'Salon yedeği', accept: { 'application/json': ['.json'] } }],
+    });
+  } catch (hata) {
+    if (hata.name === 'AbortError') return 'vazgecildi';
+    throw hata;
+  }
+  const yazici = await dosya.createWritable();
+  await yazici.write(JSON.stringify(await tumunuDisaAktar()));
+  await yazici.close();
+  kaydet();
+  return 'yazildi';
 }
 
 export const klasorDestekli = () => typeof window !== 'undefined' && 'showDirectoryPicker' in window;

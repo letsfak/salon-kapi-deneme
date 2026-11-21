@@ -37,6 +37,8 @@
 .ust-sekmeler a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--brand); }
 .bant { padding: 12px 14px; border-radius: var(--r-m); background: var(--warn-bg); color: var(--warn); font-weight: 600; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .bant a { color: inherit; }
+.bant:has(> p) { flex-direction: column; align-items: stretch; gap: 6px; }
+.bant p { margin: 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 .kpi-link { text-decoration: none; color: inherit; transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out); }
 .kpi-link:hover { border-color: var(--ink); transform: translateY(-2px); }
@@ -80,6 +82,8 @@ dialog.diyalog-genis { width: min(720px, calc(100vw - 24px)); max-height: calc(1
 .mini-liste li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 .mini-liste li.red { color: var(--red); }
 .satir-islem.ayri { justify-content: space-between; }
+.ozet-satir { align-items: center; gap: 12px; padding: 10px 14px; border: 1px dashed var(--line-strong); border-radius: var(--r-m); }
+.ozet-satir .kucuk-not { margin: 0; }
 .davet-izgara { display: grid; grid-template-columns: 220px 1fr; gap: 18px; align-items: center; }
 .davet-izgara .diyalog-qr { width: 220px; margin: 0; }
 .adimlar { margin: 0; padding-left: 1.2em; display: grid; gap: 10px; }
@@ -90,6 +94,10 @@ dialog.diyalog-genis { width: min(720px, calc(100vw - 24px)); max-height: calc(1
 .sonuc-not { font: 700 1.1rem/1 var(--font-body); padding: 10px 16px; border-radius: 999px; background: #ffd166; color: #1a1300; }
 .yedek.role .cip { margin-left: 6px; }
 .seri-not { color: var(--door-muted); font-size: 0.88rem; }
+.kapi-ikinci { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: rgb(8 9 11 / 0.86); }
+.kapi-ikinci-ic { width: min(520px, 100%); padding: 26px; display: grid; gap: 10px; background: var(--door-surface); color: var(--door-ink); border: 1px solid var(--door-line); border-top: 4px solid #ffd166; }
+.kapi-ikinci-ic h2 { font-size: 2.2rem; }
+.kapi-ikinci-ic p:not(.etiket) { color: var(--door-muted); }
 
 /* Üye kartı */
 .ekle-ipucu { border: 2px dashed var(--line-strong); border-radius: var(--r-m); padding: 14px 16px; display: grid; gap: 8px; }

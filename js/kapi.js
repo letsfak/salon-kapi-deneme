@@ -7,6 +7,7 @@ import { gecisKaydet, hareketlerAralik, degisiklikDinle } from './depo.js';
 import { veriYukle, anaAnahtar } from './veri.js';
 import { roleTetikle, roleHazirla } from './role.js';
 import { satirToplayici } from './okuyucu.js';
+import { kopruDinle, KAPI_KILIDI } from './okut-kopru.js';
 import { SERI_SABLONU, seriBolumuKur } from './kapi-seri.js';
 import { KAMERA_SABLONU, kameraKur } from './kapi-kamera.js';
 import { ROLE_SABLONU, roleBolumuKur } from './kapi-role.js';
@@ -56,6 +57,11 @@ const SABLON = `
     <p class="sonuc-baslik" data-sonuc-baslik></p><p class="sonuc-alt" data-sonuc-alt></p>
     <p class="sonuc-not" data-sonuc-not hidden></p><p class="sonuc-turnike" data-sonuc-turnike></p>
   </div></div>
+  <div class="kapi-ikinci" data-ikinci hidden><div class="kapi-ikinci-ic kart">
+    <p class="etiket">Kapı ekranı zaten açık</p>
+    <h2>Bu pencereyi kapatın</h2>
+    <p>Kapı ekranı başka bir pencerede çalışıyor. Okuyucu ve röle orada; iki pencere olursa üyenin okuttuğu yanlış pencereye gidebilir. Diğer pencere kapanırsa bu pencere kendiliğinden devralır.</p>
+  </div></div>
   <p class="sr" role="status" aria-live="assertive" data-duyuru></p>
 </section>`;
 
@@ -64,7 +70,7 @@ export function kapiAc(kok, salonIlk) {
   const $ = (s) => kok.querySelector(s);
   const s = {
     mod: 'giris', mesgul: false, sonMetin: '', sonZaman: 0, tusSon: 0, kilit: null, zamanlar: [], sessiz: new Map(), kapandi: false,
-    yanlisKodlar: [], kodKilidiSonu: 0,
+    yanlisKodlar: [], kodKilidiSonu: 0, lider: false, donanimKapat: [],
   };
   const d = { salon: salonIlk, uyeler: new Map(), odemeler: [], ana: anaAnahtar(salonIlk), anahtarlar: new Map() };
 
@@ -127,14 +133,25 @@ export function kapiAc(kok, salonIlk) {
     return { gecerli: false, sebep: 'kod' };
   }
 
-  async function isle(ham, kaynak) {
+  /**
+   * Okutmayı kabul ederse true döner ve arkada işler. Kabul etmezse sebebini döner:
+   * 'bos' | 'lider-degil' | 'tekrar' (aynı kod az önce okundu) | 'mesgul' (önceki sonuç ekranda). Panel köprüsü buna göre uyarır.
+   */
+  function isle(ham, kaynak) {
     const metin = String(ham).trim();
     const simdi = Date.now();
-    if (!metin || s.mesgul) return;
-    if (metin === s.sonMetin && simdi - s.sonZaman < AYNI_KOD_BEKLEME_MS) return;
+    if (!metin) return 'bos';
+    if (!s.lider) return 'lider-degil';
+    if (metin === s.sonMetin && simdi - s.sonZaman < AYNI_KOD_BEKLEME_MS) return 'tekrar';
+    if (s.mesgul) return 'mesgul';
     s.sonMetin = metin;
     s.sonZaman = simdi;
     s.mesgul = true;
+    islemYap(metin, kaynak, simdi);
+    return true;
+  }
+
+  async function islemYap(metin, kaynak, simdi) {
     try {
       const dogrulama = await dogrula(metin, simdi);
       if (kaynak === 'kamera' && dogrulama.uyeId && (s.sessiz.get(dogrulama.uyeId) || 0) > simdi) { s.mesgul = false; return; }
@@ -177,6 +194,7 @@ export function kapiAc(kok, salonIlk) {
 
   function tus(e) {
     if (e.target instanceof Element && e.target.closest('input, select, textarea')) return;
+    if (typeof e.key !== 'string') return; // tarayıcının otomatik doldurması tuşsuz olay gönderir
     const simdi = performance.now();
     if (simdi - s.tusSon > OKUYUCU_TUS_ARASI_MS) klavye.sifirla();
     s.tusSon = simdi;
@@ -210,11 +228,26 @@ export function kapiAc(kok, salonIlk) {
     g.value = '';
     g.blur(); // odak kutuda kalırsa USB okuyucunun yazdıkları kutuya gider, kapı okumaz
   });
-  document.addEventListener('keydown', tus);
   document.addEventListener('pointerdown', sesiAc, { once: true });
-  const kamera = kameraKur(kok, { teslim: (m) => isle(m, 'kamera'), mesgulMu: () => s.mesgul, ekranAcikTut });
-  const seriyiKapat = seriBolumuKur(kok, { teslim: okuyucudan, gecerliMi });
-  const roleyiKapat = roleBolumuKur(kok);
+
+  // Okuyucu, kamera, röle ve panel köprüsü yalnız kapıyı tutan pencerede çalışır.
+  function baslat() {
+    if (s.kapandi || s.lider) return;
+    s.lider = true;
+    $('[data-ikinci]').hidden = true;
+    document.addEventListener('keydown', tus);
+    const kamera = kameraKur(kok, { teslim: (m) => isle(m, 'kamera'), mesgulMu: () => s.mesgul, ekranAcikTut });
+    s.donanimKapat.push(
+      () => document.removeEventListener('keydown', tus),
+      () => klavye.sifirla(),
+      () => kamera.kapat(),
+      seriBolumuKur(kok, { teslim: okuyucudan, gecerliMi }),
+      roleBolumuKur(kok),
+      kopruDinle(okuyucudan),
+    );
+  }
+  const kapiyiBirak = tekPencere(baslat, () => { $('[data-ikinci]').hidden = false; }, () => s.kapandi);
+
   const dinlemeyiBirak = degisiklikDinle(() => { d.anahtarlar.clear(); yukle(); });
   const gorunurluk = () => { if (document.visibilityState === 'visible') ekranAcikTut(); };
   document.addEventListener('visibilitychange', gorunurluk);
@@ -224,14 +257,33 @@ export function kapiAc(kok, salonIlk) {
   return () => {
     s.kapandi = true;
     clearTimeout(s.cikisZ);
-    klavye.sifirla();
-    kamera.kapat();
-    seriyiKapat();
-    roleyiKapat();
+    s.donanimKapat.forEach((f) => { try { f(); } catch { /* kapanırken hata önemsiz */ } });
+    kapiyiBirak();
     dinlemeyiBirak();
     s.zamanlar.forEach((z) => { clearInterval(z); clearTimeout(z); });
     s.kilit?.release?.();
-    document.removeEventListener('keydown', tus);
     document.removeEventListener('visibilitychange', gorunurluk);
   };
+}
+
+/**
+ * Kapı ekranını tek pencereye kilitler (Web Locks). Kilit boştaysa hemen baslat; değilse bekle() çağrılır
+ * ve diğer pencere kapanınca kilit devralınıp baslat çalışır. Dönüş: kilidi bırakan fonksiyon.
+ */
+function tekPencere(baslat, bekle, kapandiMi) {
+  const kilitler = typeof navigator !== 'undefined' ? navigator.locks : null;
+  if (!kilitler) { baslat(); return () => {}; }
+  const iptal = new AbortController();
+  let birak = () => {};
+  const tut = () => {
+    if (kapandiMi()) return undefined;
+    return new Promise((coz) => { birak = coz; baslat(); });
+  };
+  kilitler.request(KAPI_KILIDI, { ifAvailable: true }, (kilit) => {
+    if (kilit) return tut();
+    if (kapandiMi()) return undefined;
+    bekle();
+    return kilitler.request(KAPI_KILIDI, { signal: iptal.signal }, tut).catch(() => {});
+  }).catch(() => {});
+  return () => { iptal.abort(); birak(); };
 }

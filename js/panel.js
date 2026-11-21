@@ -1,8 +1,8 @@
 // Sahip/hoca paneli kabuğu: sekmeler, canlı yenileme, hareketsizlikte kilit, günlük otomatik yedek.
 import { degisiklikDinle, eskiHareketleriSil } from './depo.js';
-import { KAPI_KAYIT_SAKLAMA_GUN } from './kural.js';
+import { KAPI_KAYIT_SAKLAMA_GUN, usbYedekGerekliMi } from './kural.js';
 import { KILIT_MS, paneliAcikIsaretle, paneliKilitle } from './pin.js';
-import { gunlukYedekAl, yedekDurumu, yedekIzniVer } from './yedek.js';
+import { gunlukYedekAl, yedekDurumu, yedekIzniVer, usbYedekAl, usbYedekSon } from './yedek.js';
 import { veriYukle } from './veri.js';
 import { saatTR, bildir } from './ui.js';
 import * as bugun from './panel-bugun.js';
@@ -10,6 +10,8 @@ import * as uyeler from './panel-uyeler.js';
 import * as hatirlat from './panel-hatirlat.js';
 import * as kasa from './panel-kasa.js';
 import * as ayarlar from './panel-ayar.js';
+
+const OKUTMA_PAYI_MS = 400;
 
 const SEKMELER = [
   ['bugun', 'Bugün', bugun], ['uyeler', 'Üyeler', uyeler], ['hatirlat', 'Hatırlat', hatirlat],
@@ -63,25 +65,43 @@ export function panelAc(kok, salonIlk, sekmeAd) {
       kok.querySelector('[data-salon]').textContent = veri.salon.ad;
       if (typeof sekmeKapat === 'function') sekmeKapat();
       sekmeKapat = sekme[2].ac(icerik, ctx);
+      bantCiz().catch(() => {});
     } catch (hata) {
       bildir(`Veri okunamadı: ${hata.message}`, { hata: true });
     }
   }
   ctx.yenile = ciz;
 
+  // Yedek uyarıları birbirinden bağımsız: klasör yedeği kurulu olmasa da USB hatırlatması görünür.
+  async function bantCiz() {
+    const { durum } = await yedekDurumu();
+    if (!ctx.aktif) return;
+    const satirlar = [];
+    if (durum === 'yok') satirlar.push('Otomatik yedek kurulmadı. Bilgisayar bozulursa üye listesi gider. <a href="#/panel/ayarlar">Ayarlar → Yedek</a>');
+    if (durum === 'izin-gerek') satirlar.push('Günlük yedek için izin gerekiyor. <button type="button" class="btn btn-kucuk" data-izin>İzin ver ve yedekle</button>');
+    if (ctx.uyeler?.length > 0 && usbYedekGerekliMi(usbYedekSon())) {
+      satirlar.push('Bu hafta USB belleğe yedek alınmadı. Laptop çalınır ya da bozulursa üyeler buradan geri gelir. <button type="button" class="btn btn-kucuk" data-usb>USB belleğe yedek al</button>');
+    }
+    bant.hidden = satirlar.length === 0;
+    bant.innerHTML = satirlar.map((s) => `<p>${s}</p>`).join('');
+    bant.querySelector('[data-izin]')?.addEventListener('click', async () => {
+      if (await yedekIzniVer()) { await gunlukYedekAl({ zorla: true }); bildir('Yedek alındı'); bantCiz(); }
+    });
+    bant.querySelector('[data-usb]')?.addEventListener('click', async () => {
+      try {
+        const sonuc = await usbYedekAl();
+        if (sonuc === 'yazildi') bildir('USB yedeği alındı. Belleği çıkarıp kilitli bir yerde saklayın.');
+        if (sonuc === 'indirildi') bildir('Yedek İndirilenler klasörüne indi. Oradan USB belleğe kopyalayın.');
+        bantCiz();
+      } catch (hata) { bildir(`USB yedeği alınamadı: ${hata.message}`, { hata: true }); }
+    });
+  }
+
   async function yedekBandi() {
     try {
       const ad = await gunlukYedekAl();
       if (ad) bildir(`Günlük yedek alındı: ${ad}`);
-      const { durum } = await yedekDurumu();
-      if (durum === 'hazir') { bant.hidden = true; return; }
-      bant.hidden = false;
-      bant.innerHTML = durum === 'yok'
-        ? 'Otomatik yedek kurulmadı. Bilgisayar bozulursa üye listesi gider. <a href="#/panel/ayarlar">Ayarlar → Yedek</a>'
-        : 'Günlük yedek için izin gerekiyor. <button type="button" class="btn btn-kucuk" data-izin>İzin ver ve yedekle</button>';
-      bant.querySelector('[data-izin]')?.addEventListener('click', async () => {
-        if (await yedekIzniVer()) { await gunlukYedekAl({ zorla: true }); bildir('Yedek alındı'); yedekBandi(); }
-      });
+      await bantCiz();
     } catch (hata) {
       bant.hidden = false;
       bant.textContent = `Yedek alınamadı: ${hata.message}`;
@@ -94,8 +114,14 @@ export function panelAc(kok, salonIlk, sekmeAd) {
     sonHareket = Date.now();
     if (sonHareket - sonIsaret > 30_000) { paneliAcikIsaretle(); sonIsaret = sonHareket; }
   };
+  // Tuşlar biraz gecikmeyle hareket sayılır: bu arada okuyucu QR'ı tanınırsa (salonkapi:okutma) sayılmaz.
+  let bekleyenTus = null;
+  const tusHareketi = () => { clearTimeout(bekleyenTus); bekleyenTus = setTimeout(hareket, OKUTMA_PAYI_MS); };
+  const okutmaOldu = () => clearTimeout(bekleyenTus);
   const kilitle = () => { paneliKilitle(); window.dispatchEvent(new HashChangeEvent('hashchange')); };
-  ['pointerdown', 'keydown'].forEach((t) => document.addEventListener(t, hareket));
+  document.addEventListener('pointerdown', hareket);
+  document.addEventListener('keydown', tusHareketi);
+  window.addEventListener('salonkapi:okutma', okutmaOldu);
   kok.querySelector('[data-kilitle]').addEventListener('click', kilitle);
 
   const dinlemeyiBirak = degisiklikDinle(arkaPlanYenile);
@@ -105,8 +131,8 @@ export function panelAc(kok, salonIlk, sekmeAd) {
   }, 15_000));
   zamanlar.push(setInterval(arkaPlanYenile, 120_000));
   saatYaz();
-  ciz();
-  yedekBandi();
+  ciz().then(() => { if (ctx.aktif) yedekBandi(); });
+  zamanlar.push(setInterval(() => bantCiz().catch(() => {}), 120_000));
   // Aydınlatma metnindeki söz: kapı kayıtları 12 ay sonra silinir.
   eskiHareketleriSil(Date.now() - KAPI_KAYIT_SAKLAMA_GUN * 86_400_000).catch(() => {});
 
@@ -114,8 +140,11 @@ export function panelAc(kok, salonIlk, sekmeAd) {
     ctx.aktif = false;
     dinlemeyiBirak();
     clearTimeout(bekleyen);
+    clearTimeout(bekleyenTus);
     zamanlar.forEach(clearInterval);
-    ['pointerdown', 'keydown'].forEach((t) => document.removeEventListener(t, hareket));
+    document.removeEventListener('pointerdown', hareket);
+    document.removeEventListener('keydown', tusHareketi);
+    window.removeEventListener('salonkapi:okutma', okutmaOldu);
     if (typeof sekmeKapat === 'function') sekmeKapat();
     document.querySelectorAll('dialog.diyalog').forEach((d) => d.remove());
   };

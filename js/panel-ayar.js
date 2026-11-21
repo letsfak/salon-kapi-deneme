@@ -3,10 +3,25 @@ import { ayarOku, ayarYaz, uyeSil } from './depo.js';
 import { silinecekUyeler } from './kural.js';
 import { MARKA } from './marka.js';
 import { pinGecerliMi, pinDogrula, pinTuret } from './pin.js';
-import { klasorDestekli, yedekKlasoruSec, yedekDurumu, gunlukYedekAl, yedekIndir, yedektenYukle, yedekIzniVer } from './yedek.js';
+import {
+  klasorDestekli, yedekKlasoruSec, yedekDurumu, gunlukYedekAl, yedekIndir, yedektenYukle, yedekIzniVer, usbYedekAl, usbYedekSon,
+} from './yedek.js';
 import { VARSAYILAN_ROLE, hexBayt } from './role.js';
 import { csvAktarPenceresi } from './csv-aktar.js';
-import { k, tarihTR, bildir } from './ui.js';
+import { laptopBetigi, tarayiciTuru, betikIndir } from './laptop.js';
+import { k, tarihTR, bildir, tabanAdres } from './ui.js';
+
+const LAPTOP_LISTESI = `
+  <ol class="adimlar">
+    <li>Kurulum ve her gün kullanım <b>hep bu tarayıcıda ve aynı profilde</b> olsun. Başka tarayıcıda açılan sayfa boş kurulum ekranı gösterir.</li>
+    <li>"Hazırlama dosyasını indir"e basın, inen dosyayı çalıştırın. Uyarı çıkarsa <b>Ek bilgi → Yine de çalıştır</b>.</li>
+    <li>Windows Ayarlar → Windows Update → Gelişmiş seçenekler → <b>Etkin saatler</b>: salonun açık olduğu saatler. Güncelleme yeniden başlatması gece olur.</li>
+    <li>Kapı ekranında bir kez <b>Röleyi bağla</b>. Okuyucu COM modundaysa <b>Okuyucuyu bağla</b>. Sonra tarayıcı hatırlar.</li>
+    <li>Okuyucu klavye gibi yazar: kapı ekranı ya da panel öndeyken sorun yok, panel okutulanı kapıya iletir. <b>Başka programda</b> (WhatsApp, Excel) yazı yazılırken okutulan QR o programa gider. Okuyucunun kılavuzunda "USB COM / Virtual COM" ayar barkodu varsa okutun; o zaman hangi pencere önde olursa olsun kapı okur.</li>
+    <li>Yedek: klasör seçin, haftada bir USB belleğe yedek alın. Bellek kilitli bir yerde dursun (yedekte salonun gizli anahtarı var).</li>
+    <li>Deneme: laptopu yeniden başlatın, kapı ekranı kendiliğinden açılmalı; bir üye QR okutsun.</li>
+    <li>İlk haftalarda eski kart okuyucu çalışır kalsın.</li>
+  </ol>`;
 
 const sayi = (v) => Math.max(0, Math.round(Number(String(v ?? '').replace(/[^\d]/g, '')) || 0));
 
@@ -33,10 +48,20 @@ export function ac(el, ctx) {
         <button type="button" class="btn" data-simdi>Şimdi yedekle</button>
         <button type="button" class="btn" data-indir>Yedeği indir</button>
       </div>
+      <div class="satir-islem ayri"><p class="aciklama" data-usb-durum></p>
+        <button type="button" class="btn btn-koyu" data-usb>USB belleğe yedek al</button></div>
       <details><summary>Yedekten geri yükle</summary>
         <p class="aciklama">Bu bilgisayardaki tüm veri, seçtiğiniz yedekteki haliyle değişir.</p>
         <input type="file" accept="application/json,.json" class="girdi" data-yukle></details>
       <p class="kucuk-not">Yedek dosyası salonun gizli anahtarını içerir. Laptopta ya da USB bellekte durmalı, kimseyle paylaşılmamalı.</p>
+    </section>
+
+    <section class="kutu form-yigin">
+      <h2>Bu laptop</h2>
+      <p class="aciklama">Laptop açılınca kapı ekranı kendiliğinden gelsin, laptop uyumasın. Salonda bir kez yapılır.</p>
+      <div class="satir-islem"><button type="button" class="btn btn-ana" data-laptop>Hazırlama dosyasını indir</button></div>
+      <p class="kucuk-not" data-laptop-not></p>
+      <details><summary>Salonda yapılacaklar (sırayla)</summary>${LAPTOP_LISTESI}</details>
     </section>
 
     <section class="kutu form-yigin">
@@ -112,6 +137,35 @@ export function ac(el, ctx) {
     } catch (h) { bildir(h.message, { hata: true }); }
   });
   el.querySelector('[data-indir]').addEventListener('click', () => yedekIndir().catch((h) => bildir(h.message, { hata: true })));
+
+  const usbYaz = () => {
+    const son = usbYedekSon();
+    el.querySelector('[data-usb-durum]').innerHTML = son
+      ? `Son USB yedeği: <b>${k(new Date(son).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }))}</b>. Haftada bir alın.`
+      : '<b>USB belleğe hiç yedek alınmadı.</b> Laptop çalınır ya da bozulursa üyeler buradan geri gelir.';
+  };
+  el.querySelector('[data-usb]').addEventListener('click', async () => {
+    try {
+      const sonuc = await usbYedekAl();
+      if (sonuc === 'yazildi') bildir('USB yedeği alındı. Belleği çıkarıp kilitli bir yerde saklayın.');
+      if (sonuc === 'indirildi') bildir('Yedek İndirilenler klasörüne indi. Oradan USB belleğe kopyalayın.');
+      usbYaz();
+    } catch (h) { bildir(`USB yedeği alınamadı: ${h.message}`, { hata: true }); }
+  });
+  usbYaz();
+
+  const tarayici = tarayiciTuru();
+  const laptopDugmesi = el.querySelector('[data-laptop]');
+  el.querySelector('[data-laptop-not]').textContent = tarayici
+    ? `Dosya bu tarayıcı (${tarayici === 'edge' ? 'Edge' : 'Chrome'}) ve bu adres için üretilir. Yönetici izni istemez.`
+    : 'Bu tarayıcı desteklenmiyor. Paneli Chrome ya da Edge ile açın.';
+  laptopDugmesi.disabled = !tarayici;
+  laptopDugmesi.addEventListener('click', () => {
+    try {
+      const ad = betikIndir(laptopBetigi({ taban: tabanAdres(), tarayici, salonAd: s.ad }), s.ad);
+      bildir(`${ad} indirildi. İndirilenler'den çalıştırın.`);
+    } catch (h) { bildir(h.message, { hata: true }); }
+  });
   el.querySelector('[data-yukle]').addEventListener('change', async (e) => {
     const dosya = e.target.files?.[0];
     if (!dosya || !window.confirm('Bu bilgisayardaki tüm veri yedekteki haliyle değişecek. Devam edilsin mi?')) return;
