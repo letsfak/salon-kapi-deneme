@@ -1,6 +1,7 @@
-// Üye formları (pencere): yeni üye, uzat, ödeme, düzenle, davet linki.
-import { uyeKaydet, odemeKaydet, uyeGetir } from './depo.js';
+// Üye formları (pencere): yeni üye, uzat, ödeme, düzenle (takım ligi dahil), davet linki.
+import { uyeKaydet, odemeKaydet, uyeGetir, uyeleriGetir } from './depo.js';
 import { yeniUye, uzat, odemeEkle, bilgiGuncelle, borc } from './salon.js';
+import { ligdeMi, ligSecimi, ligUygula, takimlar, TAKIM_EN_FAZLA, TAKMA_AD_UZUNLUK, TAKIM_AD_UZUNLUK } from './lig.js';
 import { bugunISO, gercekTarih } from './tarih.js';
 import { davetLinkiUret } from './veri.js';
 import { waLinki, MESAJ } from './whatsapp.js';
@@ -142,6 +143,28 @@ export function odemeFormu(ctx, uye, sonra) {
   });
 }
 
+/** Takım ligi alanı: isteğe bağlı, yalnız üye isterse işaretlenir. Takım yazılır ya da mevcutlardan seçilir. */
+const ligAlani = (uyeler) => `
+  <fieldset class="alan-grup"><legend>Takım ligi (isteğe bağlı)</legend>
+    <label class="onay"><input type="checkbox" name="ligKatil"> Lige katıl</label>
+    <p class="kucuk-not">Yalnız üye isterse işaretleyin. Takma ad, takım ve geliş günleri ligde kullanılır; işaret kaldırılınca lig bilgisi silinir.</p>
+    <div class="form-izgara" data-lig-alanlar>
+      <div class="alan"><label for="l-ad">Takma ad</label><input id="l-ad" name="ligAd" class="girdi" maxlength="${TAKMA_AD_UZUNLUK}" autocomplete="off"></div>
+      <div class="alan"><label for="l-takim">Takım (yazın ya da seçin)</label><input id="l-takim" name="ligTakim" class="girdi" maxlength="${TAKIM_AD_UZUNLUK}" list="l-takimlar" autocomplete="off">
+        <datalist id="l-takimlar">${takimlar(uyeler).map((t) => `<option value="${k(t.ad)}">${t.uyeler.length}/${TAKIM_EN_FAZLA} kişi</option>`).join('')}</datalist></div>
+    </div>
+  </fieldset>`;
+
+function ligAlaniBagla(form, uye) {
+  form.ligKatil.checked = ligdeMi(uye);
+  form.ligAd.value = uye.lig?.ad || '';
+  form.ligTakim.value = uye.lig?.takim || '';
+  const alanlar = form.querySelector('[data-lig-alanlar]');
+  const goster = () => { alanlar.hidden = !form.ligKatil.checked; };
+  form.ligKatil.addEventListener('change', goster);
+  goster();
+}
+
 export function duzenleFormu(ctx, uye, sonra) {
   pencereAc(`
     <div><p class="etiket">${k(uye.id)}</p><h2>Bilgileri düzenle</h2></div>
@@ -149,17 +172,23 @@ export function duzenleFormu(ctx, uye, sonra) {
       <div class="alan"><label>Ad soyad</label><input name="ad" class="girdi" maxlength="60" required></div>
       <div class="alan"><label>Cep telefonu</label><input name="tel" class="girdi" inputmode="tel" maxlength="20"></div>
       <div class="alan"><label>Bitiş tarihi (düzeltme için)</label><input name="bitis" type="date" class="girdi"></div>
+      ${ligAlani(ctx.uyeler)}
+      <p class="form-hata" data-hata role="alert"></p>
       <div class="satir-islem"><button class="btn btn-ana" type="submit">Kaydet</button><button class="btn" type="button" data-kapat>Vazgeç</button></div>
     </form>`, (d, kapat) => {
     const form = d.querySelector('[data-form]');
     form.ad.value = uye.ad;
     form.tel.value = uye.tel || '';
     form.bitis.value = uye.bitis;
+    ligAlaniBagla(form, uye);
     tekGonderim(form, async () => {
       const guncel = await taze(uye);
       if (!guncel) { kapat(); bildir('Üye artık kayıtlı değil', { hata: true }); return true; }
+      // Takım doluluğu formun açıldığı andaki listeyle değil, veritabanının güncel hâliyle denetlenir.
+      const secim = ligSecimi({ katil: form.ligKatil.checked, ad: form.ligAd.value, takim: form.ligTakim.value }, guncel, await uyeleriGetir());
+      if (secim.hata) { d.querySelector('[data-hata]').textContent = secim.hata; return false; }
       const bitis = gercekTarih(form.bitis.value) ? form.bitis.value : guncel.bitis;
-      const yeni = { ...bilgiGuncelle(guncel, { ad: form.ad.value, tel: form.tel.value }), bitis, eksik: false };
+      const yeni = ligUygula({ ...bilgiGuncelle(guncel, { ad: form.ad.value, tel: form.tel.value }), bitis, eksik: false }, secim.lig);
       await uyeKaydet(yeni);
       kapat();
       await ctx.yenile();

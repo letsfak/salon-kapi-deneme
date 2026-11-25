@@ -3,7 +3,8 @@
 import { qrDogrula, qrCoz, yedekKodBul, uyeAnahtariTuret } from './kod.js';
 import { kapiKarari, iceridekiler, GIRIS_KILIDI_MS } from './kural.js';
 import { girisIsle, borc } from './salon.js';
-import { gecisKaydet, hareketlerAralik, degisiklikDinle } from './depo.js';
+import { gecisKaydet, hareketlerAralik, uyeHareketleri, degisiklikDinle } from './depo.js';
+import { ligdeMi, haftaAraligi, kapiLigSatiri } from './lig.js';
 import { veriYukle, anaAnahtar } from './veri.js';
 import { roleTetikle, roleHazirla } from './role.js';
 import { satirToplayici } from './okuyucu.js';
@@ -55,6 +56,7 @@ const SABLON = `
   <div class="sonuc" data-sonuc aria-hidden="true"><div class="sonuc-ic">
     <div class="sonuc-ikon" aria-hidden="true"></div>
     <p class="sonuc-baslik" data-sonuc-baslik></p><p class="sonuc-alt" data-sonuc-alt></p>
+    <p class="sonuc-lig" data-sonuc-lig hidden></p>
     <p class="sonuc-not" data-sonuc-not hidden></p><p class="sonuc-turnike" data-sonuc-turnike></p>
   </div></div>
   <div class="kapi-ikinci" data-ikinci hidden><div class="kapi-ikinci-ic kart">
@@ -70,7 +72,7 @@ export function kapiAc(kok, salonIlk) {
   const $ = (s) => kok.querySelector(s);
   const s = {
     mod: 'giris', mesgul: false, sonMetin: '', sonZaman: 0, tusSon: 0, kilit: null, zamanlar: [], sessiz: new Map(), kapandi: false,
-    yanlisKodlar: [], kodKilidiSonu: 0, lider: false, donanimKapat: [],
+    yanlisKodlar: [], kodKilidiSonu: 0, lider: false, donanimKapat: [], sonucNo: 0,
   };
   const d = { salon: salonIlk, uyeler: new Map(), odemeler: [], ana: anaAnahtar(salonIlk), anahtarlar: new Map() };
 
@@ -111,11 +113,30 @@ export function kapiAc(kok, salonIlk) {
     const not = $('[data-sonuc-not]');
     not.hidden = !karar.not;
     not.textContent = karar.not || '';
+    s.sonucNo += 1; // geç gelen lig satırı yalnız kendi geçişinin ekranına yazılsın
+    $('[data-sonuc-lig]').hidden = true;
+    $('[data-sonuc-lig]').textContent = '';
     $('[data-sonuc-turnike]').textContent = !karar.gecti ? 'Turnike kilitli' : turnikeAcildi ? 'Turnike açıldı · 1 tur' : 'Geçiş onaylandı';
     $('[data-duyuru]').textContent = `${karar.baslik}. ${karar.alt}`;
     bip(karar.gecti);
     sonListesi();
     s.zamanlar.push(setTimeout(() => { kutu.classList.remove('acik'); kutu.setAttribute('aria-hidden', 'true'); s.mesgul = false; }, SONUC_SURESI_MS));
+  }
+
+  /** Lig satırı, geçiş kaydedilip sonuç ekrana çıktıktan sonra hesaplanır: turnikeyi ve karşılamayı bekletmez. */
+  function ligSatiriYaz(uye, simdi) {
+    const no = s.sonucNo;
+    Promise.resolve().then(() => ligSatiriHesapla(uye, [...d.uyeler.values()], simdi)).then((satir) => {
+      if (!satir || no !== s.sonucNo || s.kapandi || !$('[data-sonuc]').classList.contains('acik')) return;
+      const el = $('[data-sonuc-lig]');
+      el.textContent = satir;
+      el.hidden = false;
+      $('[data-duyuru]').textContent += `. ${satir}`;
+    }).catch((hata) => {
+      // Bilerek yutulan tek hata: lig satırı yalnız bilgidir. Geçiş zaten kaydedildi ve onaylandı; okuma ya da
+      // hesap bozulursa satır çıkmaz, kapı akışı sürer. Sebep konsolda kalır.
+      console.error('Lig satırı hesaplanamadı:', hata);
+    });
   }
 
   async function dogrula(metin, simdi) {
@@ -176,6 +197,7 @@ export function kapiAc(kok, salonIlk) {
       const acildi = girisMi && (await roleHazirla()) ? await roleTetikle() : false;
       if (s.mod === 'cikis') cikisZamanlayici();
       sonucGoster(karar, acildi);
+      if (girisMi && ligdeMi(uye)) ligSatiriYaz(d.uyeler.get(uye.id) || uye, simdi);
     } catch (hata) {
       sonucGoster({ gecti: false, baslik: 'Doğrulama yapılamadı', alt: hata.message, not: null }, false);
     }
@@ -264,6 +286,15 @@ export function kapiAc(kok, salonIlk) {
     s.kilit?.release?.();
     document.removeEventListener('visibilitychange', gorunurluk);
   };
+}
+
+/** Lig satırı için okuma ve hesap. O anki geçiş kaydedildikten sonra çağrılır, bu yüzden sayıma girer. */
+async function ligSatiriHesapla(uye, uyeler, simdi) {
+  const [haftaHareket, uyeHareket] = await Promise.all([
+    hareketlerAralik(haftaAraligi(simdi).bas, simdi + 1),
+    uyeHareketleri(uye.id, Infinity),
+  ]);
+  return kapiLigSatiri({ uye, uyeler, haftaHareket, uyeHareket, simdi });
 }
 
 /**

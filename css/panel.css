@@ -73,3 +73,44 @@
   .islem-grup { justify-content: flex-start; padding-top: 6px; }
   .ekle-form { grid-template-columns: 1fr; }
 }
+
+/* Takım ligi: sıra numarası iri, lider koyu rozetle ayrılır; tamamlanmamış takımlar ayrı ve soluk.
+   Satırlar tıklanmaz: üye tablosunun üzerine gelme vurgusu burada yok. */
+.lig-govde { display: grid; gap: 14px; }
+/* Sabit sütunlar: sıralama ve tamamlanmamış takımlar tablosu alt alta hizalı dursun. */
+.lig-tablo { table-layout: fixed; }
+.lig-tablo thead th:nth-child(1) { width: 72px; }
+.lig-tablo thead th:nth-child(3) { width: 72px; }
+.lig-tablo thead th:nth-child(4) { width: 150px; }
+.lig-tablo thead th:nth-child(5) { width: 110px; }
+.lig-tablo td { font-variant-numeric: tabular-nums; }
+.lig-tablo tbody tr:hover { background: none; }
+.lig-tablo tbody th {
+  text-align: left; font: 700 1.3rem/1.1 var(--font-display); letter-spacing: 0.005em; text-transform: none;
+  color: var(--ink); padding: 12px 6px 4px; border-bottom: 0; overflow-wrap: anywhere;
+}
+.lig-tablo .lig-takim-satir > td { border-bottom: 0; padding-bottom: 4px; }
+.lig-tablo .lig-uye-satir > td { padding-top: 2px; padding-bottom: 12px; }
+.lig-sira { width: 64px; }
+.lig-sira-no {
+  display: inline-grid; place-items: center; min-width: 40px; height: 40px; padding: 0 6px;
+  border: 1.5px solid var(--line-strong); border-radius: var(--r-s); font-size: 1.5rem;
+}
+.lig-lider .lig-sira-no { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.lig-puan { font-size: 1.7rem; }
+.lig-uyeler { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.lig-uyeler li {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  background: var(--surface-2); font-size: 0.85rem; font-weight: 600; overflow-wrap: anywhere;
+}
+.lig-uyeler li span { color: var(--muted); font-weight: 500; white-space: nowrap; }
+.lig-eksik { display: grid; gap: 8px; padding-top: 12px; border-top: 1px dashed var(--line-strong); }
+.lig-eksik h3 { font-size: 1.3rem; color: var(--muted); }
+.lig-eksik .lig-tablo, .lig-eksik .lig-tablo tbody th { color: var(--muted); }
+.lig-eksik .lig-uyeler li { background: transparent; border: 1px dashed var(--line-strong); }
+@media (max-width: 640px) {
+  .lig-tablo tbody th { display: block; padding: 2px 0; }
+  .lig-tablo .lig-takim-satir { border-bottom: 0; padding-bottom: 0; }
+  .lig-tablo .lig-uye-satir > td:first-child { display: none; }
+  .lig-sira { width: auto; }
+}

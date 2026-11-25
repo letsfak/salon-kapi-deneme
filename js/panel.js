@@ -9,13 +9,14 @@ import * as bugun from './panel-bugun.js';
 import * as uyeler from './panel-uyeler.js';
 import * as hatirlat from './panel-hatirlat.js';
 import * as kasa from './panel-kasa.js';
+import * as lig from './panel-lig.js';
 import * as ayarlar from './panel-ayar.js';
 
 const OKUTMA_PAYI_MS = 400;
 
 const SEKMELER = [
   ['bugun', 'Bugün', bugun], ['uyeler', 'Üyeler', uyeler], ['hatirlat', 'Hatırlat', hatirlat],
-  ['kasa', 'Kasa', kasa], ['ayarlar', 'Ayarlar', ayarlar],
+  ['kasa', 'Kasa', kasa], ['lig', 'Lig', lig], ['ayarlar', 'Ayarlar', ayarlar],
 ];
 
 export function panelAc(kok, salonIlk, sekmeAd) {
