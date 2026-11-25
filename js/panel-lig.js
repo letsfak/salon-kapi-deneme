@@ -52,7 +52,9 @@ function govdeHtml(tablo) {
   const aralik = aralikMetni(tablo);
   const siralama = tablo.siralama.length
     ? tabloHtml(tablo.siralama, `Takım sıralaması, ${aralik}`)
-    : `<p class="bos">Sıraya giren takım yok. Takımın sıraya girmesi için en az ${TAKIM_EN_AZ} lig üyesi gerekir.</p>`;
+    : `<p class="bos">${tablo.eksikler.length
+      ? `Sıraya giren takım yok. Takımın sıraya girmesi için en az ${TAKIM_EN_AZ} lig üyesi gerekir.`
+      : 'Bu tarihlerde ligde üye yoktu.'}</p>`;
   const eksik = tablo.eksikler.length ? `
     <section class="lig-eksik"><h3>Tamamlanmamış takımlar</h3>
       <p class="kucuk-not">En az ${TAKIM_EN_AZ} lig üyesi olunca sıraya girer.</p>
